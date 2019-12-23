@@ -51,7 +51,7 @@ winapi = { version = "0.3.3", optional = true }
 # Note that not all features are available on all platforms, so even though a
 # feature is enabled some other feature may be used instead.
 [features]
-default = ["std", "libunwind", "libbacktrace", "dladdr", "dbghelp"]
+default = ["std", "libunwind", "dladdr", "dbghelp"]
 
 # Include std support.
 std = []

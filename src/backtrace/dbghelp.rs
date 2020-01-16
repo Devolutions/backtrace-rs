@@ -101,25 +101,24 @@ pub unsafe fn trace(cb: &mut FnMut(&super::Frame) -> bool) {
     //
     // Note that `RtlLookupFunctionEntry` only works for in-process backtraces,
     // but that's all we support anyway, so it all lines up well.
-    cfg_if::cfg_if! {
-        if #[cfg(target_pointer_width = "64")] {
-            use core::ptr;
-
-            unsafe extern "system" fn function_table_access(_process: HANDLE, addr: DWORD64) -> PVOID {
-                let mut base = 0;
-                RtlLookupFunctionEntry(addr, &mut base, ptr::null_mut()).cast()
-            }
-
-            unsafe extern "system" fn get_module_base(_process: HANDLE, addr: DWORD64) -> DWORD64 {
-                let mut base = 0;
-                RtlLookupFunctionEntry(addr, &mut base, ptr::null_mut());
-                base
-            }
-        } else {
-            let function_table_access = dbghelp.SymFunctionTableAccess64();
-            let get_module_base = dbghelp.SymGetModuleBase64();
-        }
+    #[cfg(target_pointer_width = "64")]
+    use core::ptr;
+    #[cfg(target_pointer_width = "64")]
+    unsafe extern "system" fn function_table_access(_process: HANDLE, addr: DWORD64) -> PVOID {
+        let mut base = 0;
+        RtlLookupFunctionEntry(addr, &mut base, ptr::null_mut()).cast()
     }
+    #[cfg(target_pointer_width = "64")]
+    unsafe extern "system" fn get_module_base(_process: HANDLE, addr: DWORD64) -> DWORD64 {
+        let mut base = 0;
+        RtlLookupFunctionEntry(addr, &mut base, ptr::null_mut());
+        base
+    }
+
+    #[cfg(not(target_pointer_width = "64"))]
+    let function_table_access = dbghelp.SymFunctionTableAccess64();
+    #[cfg(not(target_pointer_width = "64"))]
+    let get_module_base = dbghelp.SymGetModuleBase64();
 
     // Attempt to use `StackWalkEx` if we can, but fall back to `StackWalk64`
     // since it's in theory supported on more systems.
